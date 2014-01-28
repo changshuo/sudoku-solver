@@ -187,6 +187,9 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	// output solved result
+	s.PrettyPrint()
 	/*
 		s.PrettyPrint()
 

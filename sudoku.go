@@ -183,16 +183,22 @@ func (s *Sudoku) Solve() error {
 func main() {
 	source := "030080006500294710000300500005010804420805039108030600003007000041653002200040060"
 	s := NewSudoku(source)
-	s.PrettyPrint()
-
-	// test: output all boxes
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 3; j++ {
-			var b box = s.boxes[i][j]
-			for k := 0; k < 9; k++ {
-				fmt.Print(b[k].prettyValue())
-			}
-			fmt.Println()
-		}
+	err := s.Solve()
+	if err != nil {
+		panic(err.Error())
 	}
+	/*
+		s.PrettyPrint()
+
+		// test: output all boxes
+		for i := 0; i < 3; i++ {
+			for j := 0; j < 3; j++ {
+				var b box = s.boxes[i][j]
+				for k := 0; k < 9; k++ {
+					fmt.Print(b[k].prettyValue())
+				}
+				fmt.Println()
+			}
+		}
+	*/
 }

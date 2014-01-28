@@ -51,6 +51,7 @@ func NewSudoku(source string) *Sudoku {
 		panic("Invalid source string: string must have length of 81")
 	}
 
+	// setup blanks
 	sudoku := new(Sudoku)
 	for index, c := range bytes {
 		n, err := strconv.Atoi(string(c))
@@ -59,7 +60,13 @@ func NewSudoku(source string) *Sudoku {
 		}
 		row, col := index/9, index%9
 		sudoku.blanks[row][col] = makeBlank(n, row, col)
+
+		// compute boxes
+		boxRow, boxCol := row/3, col/3
+		inBoxRow, inBoxCol := row%3, col%3
+		sudoku.boxes[boxRow][boxCol][inBoxRow*3+inBoxCol] = &sudoku.blanks[row][col]
 	}
+
 	return sudoku
 }
 
@@ -169,12 +176,23 @@ func (s *Sudoku) Solve() error {
 	if complete, err := s.IsComplete(); complete || err != nil {
 		return err
 	}
-	//
 
 	return nil
 }
 
 func main() {
 	source := "030080006500294710000300500005010804420805039108030600003007000041653002200040060"
-	NewSudoku(source).PrettyPrint()
+	s := NewSudoku(source)
+	s.PrettyPrint()
+
+	// test: output all boxes
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 3; j++ {
+			var b box = s.boxes[i][j]
+			for k := 0; k < 9; k++ {
+				fmt.Print(b[k].prettyValue())
+			}
+			fmt.Println()
+		}
+	}
 }

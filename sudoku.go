@@ -133,8 +133,8 @@ func (s *Sudoku) getBox(b *blank) *box {
 func (s *Sudoku) isBoxConsistent(b *blank) bool {
 	for _, newB := range s.getBox(b) {
 		if b.value == newB.value &&
-			b.row == newB.row &&
-			b.col == newB.col {
+			b.row != newB.row &&
+			b.col != newB.col {
 			return false
 		}
 	}
@@ -170,13 +170,24 @@ func (s *Sudoku) IsComplete() (bool, error) {
 
 // Returns a blank that is unassigned
 func (s *Sudoku) unassignedBlock() *blank {
+	// TODO: heuristic
+	for row := 0; row < 9; row++ {
+		for col := 0; col < 9; col++ {
+			if b := s.Get(row, col); b.isEmpty() {
+				return b
+			}
+		}
+	}
 	return nil
 }
 
 // Returns true if assigning value to blank b is consistent
 func (s *Sudoku) isAssignable(b *blank, value int) bool {
-	// TODO
-	return false
+	oldval := b.value
+	b.value = value
+	assignable := s.isConsistent(b)
+	b.value = oldval
+	return assignable
 }
 
 // Returns a slice of ints that is ordered by some heuristics
@@ -197,7 +208,6 @@ func (s *Sudoku) backTrack() (bool, error) {
 	if done, err := s.IsComplete(); done || err != nil {
 		return done, err
 	}
-
 	// get any unassigned block
 	unassignedBlock := s.unassignedBlock()
 	for _, val := range s.orderDomainValues(unassignedBlock) {
@@ -243,8 +253,11 @@ func (s *Sudoku) Solve() (*Sudoku, error) {
 }
 
 func main() {
-	source := "030080006500294710000300500005010804420805039108030600003007000041653002200040060"
-	s := NewSudoku(source)
+	//p1 := "030080006500294710000300500005010804420805039108030600003007000041653002200040060"
+	//p2 := "308296000040008000502100087013000000780000035000000410120007803000800020000542106"
+	p3 := "700000000600410250013095000860000000301000405000000086000840530042036007000000009"
+
+	s := NewSudoku(p3)
 
 	newS, err := s.Solve()
 	if err != nil {

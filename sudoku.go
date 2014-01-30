@@ -6,6 +6,10 @@ import (
 	"strconv"
 )
 
+var (
+	useForwardChecking bool = false
+)
+
 // blank data structure
 // Represents a variable that may or may not be filled
 type blank struct {
@@ -81,12 +85,6 @@ func assertRange(row, col int) {
 func (s *Sudoku) Get(row, col int) *blank {
 	assertRange(row, col)
 	return &(s.blanks[row][col])
-}
-
-// Set value of (row, col) to val
-func (s *Sudoku) Set(row, col, val int) {
-	assertRange(row, col)
-	s.Get(row, col).value = val
 }
 
 // Print the beautiful board
@@ -170,38 +168,92 @@ func (s *Sudoku) IsComplete() (bool, error) {
 	return true, nil
 }
 
-// Solves puzzle by performing backtracking search
-func (s *Sudoku) Solve() error {
+// Returns a blank that is unassigned
+func (s *Sudoku) unassignedBlock() *blank {
+	return nil
+}
+
+// Returns true if assigning value to blank b is consistent
+func (s *Sudoku) isAssignable(b *blank, value int) bool {
+	// TODO
+	return false
+}
+
+// Returns a slice of ints that is ordered by some heuristics
+func (s *Sudoku) orderDomainValues(b *blank) []int {
+	// TODO
+	return []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+}
+
+// Infer on particular assignments, return whether inference is sucess,
+// and a map of inferred values
+func (s *Sudoku) inference(b *blank, value int) (bool, map[*blank]int) {
+	return true, make(map[*blank]int)
+}
+
+// Implements a recursive backtrack search algorithm
+func (s *Sudoku) backTrack() (bool, error) {
 	// check completeness and correctness
-	if complete, err := s.IsComplete(); complete || err != nil {
-		return err
+	if done, err := s.IsComplete(); done || err != nil {
+		return done, err
 	}
 
-	return nil
+	// get any unassigned block
+	unassignedBlock := s.unassignedBlock()
+	for _, val := range s.orderDomainValues(unassignedBlock) {
+		if s.isAssignable(unassignedBlock, val) {
+			// add {var = value} to assignment
+			unassignedBlock.value = val
+			// make inference
+			success, inferences := s.inference(unassignedBlock, val)
+			if success {
+				// add inferences inferences to assignments
+				for b, v := range inferences {
+					b.value = v
+				}
+				// recursive call
+				if done, _ := s.backTrack(); done { // return if done
+					return true, nil
+				}
+				// If we reach here, the particular value is not correct
+				// remove inferences
+				for b, _ := range inferences {
+					b.value = 0
+				}
+			}
+			// remove assignment
+			unassignedBlock.value = 0
+		}
+	}
+	return false, errors.New("no consistent domain value available")
+}
+
+// Solves puzzle by performing backtracking search
+// Pass Sudoku by value, returns a new completed
+// sudoku or nil, as well as any error that occured
+func (s *Sudoku) Solve() (*Sudoku, error) {
+	// make a copy of puzzle
+	newS := *s
+	// run recursive algorithm on puzzle
+	done, err := newS.backTrack()
+	if !done {
+		return nil, err
+	}
+	return &newS, err
 }
 
 func main() {
 	source := "030080006500294710000300500005010804420805039108030600003007000041653002200040060"
 	s := NewSudoku(source)
-	err := s.Solve()
+
+	newS, err := s.Solve()
 	if err != nil {
 		panic(err.Error())
 	}
 
 	// output solved result
+	fmt.Println("Original Sudoku puzzle:")
 	s.PrettyPrint()
-	/*
-		s.PrettyPrint()
-
-		// test: output all boxes
-		for i := 0; i < 3; i++ {
-			for j := 0; j < 3; j++ {
-				var b box = s.boxes[i][j]
-				for k := 0; k < 9; k++ {
-					fmt.Print(b[k].prettyValue())
-				}
-				fmt.Println()
-			}
-		}
-	*/
+	fmt.Println("\nSolution:")
+	newS.PrettyPrint()
 }
